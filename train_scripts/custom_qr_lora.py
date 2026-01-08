@@ -6,6 +6,9 @@ from typing import Optional, Union, Literal
 import math
 from torch.nn import Linear
 
+import torch
+import torch.nn as nn
+
 class CustomQRLoraLayer(nn.Module):
     def __init__(
         self,

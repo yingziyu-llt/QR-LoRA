@@ -1,8 +1,8 @@
 #!/bin/bash
 
-MODEL_PATH="/path/to/FLUX.1-dev"
-CONTENT_LORA_PATH="exps_flux/xx/checkpoint-1000/pytorch_lora_weights.safetensors"
-STYLE_LORA_PATH="exps_flux/xx/checkpoint-1000/pytorch_lora_weights.safetensors"
+MODEL_PATH="/data/jxchen/llt/QR-LoRA/FLUX.1"
+CONTENT_LORA_PATH="exps_flux/1202-103526-<c>-64/checkpoint-1000/pytorch_lora_weights.safetensors"
+STYLE_LORA_PATH="exps_flux/1202-094302-<s>-64/checkpoint-1000/pytorch_lora_weights.safetensors"
 RESIDUAL_PATH="flux_dir/flux_residual_weights.safetensors"
 
 CNT_TRIGGER_NAME="<c>"
@@ -12,8 +12,8 @@ PROMPT="a ${CNT_TRIGGER_NAME} dog in ${STY_TRIGGER_NAME} style"
 
 NUM_STEPS=28
 SEED=42
-STYLE_WEIGHTS="0.9,1.0"
-CONTENT_WEIGHTS="0.9,1.0"
+STYLE_WEIGHTS="0.8,0.9,1.0"
+CONTENT_WEIGHTS="0.8,0.9,1.0"
 DTYPE="fp16"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)

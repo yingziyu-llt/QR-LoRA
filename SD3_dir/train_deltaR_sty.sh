@@ -6,18 +6,18 @@ RANK=$2
 export NCCL_P2P_DISABLE=1
 export NCCL_IB_DISABLE=1
 
-TRIGGER_NAME="<c>"
-INSTANCE_DIR="assets/cnt/dog"
-INSTANCE_PROMPT="a photo of a ${TRIGGER_NAME} dog"
-VALID_PROMPT="a photo of a ${TRIGGER_NAME} dog on the beach"
-OUTPUT_DIR="./exps_flux/$(date +%m%d-%H%M%S)-${TRIGGER_NAME}-${RANK}"
+TRIGGER_NAME="<s>"
+INSTANCE_DIR="assets/sty/cat"
+INSTANCE_PROMPT="a cat in ${TRIGGER_NAME} style"
+VALID_PROMPT="a dog in ${TRIGGER_NAME} style"
+OUTPUT_DIR="./exps_SD3/$(date +%m%d-%H%M%S)-${TRIGGER_NAME}-${RANK}-QR"
 
 if [ ! -d "$OUTPUT_DIR" ]; then
     mkdir -p $OUTPUT_DIR
     cp $0 $OUTPUT_DIR/train_script.sh
 fi
 
-MODEL_NAME="/data/jxchen/llt/QR-LoRA/SD3"
+MODEL_NAME="/home/test_zd/llt/QR-LoRA/SD3"
 
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr ',' '\n' | wc -l)
 echo "NUM_GPUS: $NUM_GPUS"
@@ -47,7 +47,7 @@ accelerate launch --num_processes=$NUM_GPUS train_scripts/train_qrlora_SD3_delta
   --lr_warmup_steps=0 \
   --max_train_steps=1000 \
   --validation_prompt="$VALID_PROMPT" \
-  --validation_epochs=100 \
+  --validation_epochs=200 \
   --lora_init_method="triu_deltaR" \
   --checkpointing_steps=250 \
   --gradient_checkpointing\

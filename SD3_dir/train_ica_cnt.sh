@@ -10,14 +10,14 @@ TRIGGER_NAME="<c>"
 INSTANCE_DIR="assets/cnt/dog"
 INSTANCE_PROMPT="a photo of a ${TRIGGER_NAME} dog"
 VALID_PROMPT="a photo of a ${TRIGGER_NAME} dog on the beach"
-OUTPUT_DIR="./exps_flux/$(date +%m%d-%H%M%S)-${TRIGGER_NAME}-${RANK}"
+OUTPUT_DIR="./exps_SD3/$(date +%m%d-%H%M%S)-${TRIGGER_NAME}-${RANK}"
 
 if [ ! -d "$OUTPUT_DIR" ]; then
     mkdir -p $OUTPUT_DIR
     cp $0 $OUTPUT_DIR/train_script.sh
 fi
 
-MODEL_NAME="/data/jxchen/llt/QR-LoRA/SD3"
+MODEL_NAME="/home/test_zd/llt/QR-LoRA/SD3"
 
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr ',' '\n' | wc -l)
 echo "NUM_GPUS: $NUM_GPUS"
@@ -37,9 +37,8 @@ accelerate launch --num_processes=$NUM_GPUS train_scripts/train_qrlora_SD3_delta
   --instance_prompt="$INSTANCE_PROMPT" \
   --rank=$RANK \
   --resolution=512 \
-  --train_batch_size=1 \
-  --guidance_scale=1 \
-  --gradient_accumulation_steps=4 \
+  --train_batch_size=4 \
+  --gradient_accumulation_steps=1 \
   --learning_rate=1e-4 \
   --report_to="tensorboard" \
   --lr_scheduler="constant" \
@@ -47,8 +46,10 @@ accelerate launch --num_processes=$NUM_GPUS train_scripts/train_qrlora_SD3_delta
   --lr_warmup_steps=0 \
   --max_train_steps=1000 \
   --validation_prompt="$VALID_PROMPT" \
-  --validation_epochs=100 \
-  --lora_init_method="triu_deltaR" \
+  --validation_epochs=200 \
+  --lora_init_method="ica" \
   --checkpointing_steps=250 \
-  --gradient_checkpointing\
-  --use_zero_init
+  --gradient_checkpointing \
+  --use_zero_init \
+  --cache_latents \
+  --dataloader_num_workers=0

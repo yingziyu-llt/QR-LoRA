@@ -75,6 +75,7 @@ def main():
     args = parse_args()
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(device)
     dtype = torch.float16 if args.dtype == "fp16" else torch.float32
     
     pipe = FluxPipeline.from_pretrained(
