@@ -1236,21 +1236,34 @@ def main(args):
                 if isinstance(model, type(unwrap_model(transformer))):
                     state_dict = {}
                     for name, module in model.named_modules():
-                        # [修改] 增加 ICALoraLayer 的类型检查
                         if isinstance(module, (DeltaRLoraLayer, DeltaRTriuLoraLayer, ICALoraLayer)):
-                            for adapter_name in module.lora_A.keys():
-                                flux_key_q = f"{name}.lora.q.weight"
-                                flux_key_r = f"{name}.lora.delta_r.weight"
-                                flux_key_base_r = f"{name}.lora.base_r.weight"
-                                # [修改] 区分获取 Q 矩阵 (QR) 还是 S 矩阵 (ICA)
-                                if isinstance(module, ICALoraLayer):
-                                    q_tensor = module.frozen_S[adapter_name]
-                                else:
-                                    q_tensor = module.frozen_Q[adapter_name]
+                            if isinstance(module, ICALoraLayer):
+                                for adapter_name in module.lora_S_delta.keys():
+                                    flux_key_q = f"{name}.lora.q.weight"       # 对应固定的投影矩阵 (A)
+                                    flux_key_r = f"{name}.lora.delta_r.weight" # 对应可训练的源信号 (Delta S)
+                                    flux_key_base_r = f"{name}.lora.base_r.weight" # 对应固定的源信号基底 (Base S)
+                                    q_tensor = module.frozen_A[adapter_name]
+                                    delta_r_tensor = module.lora_S_delta[adapter_name]
+                                    base_r_tensor = module.lora_S_base[adapter_name]
 
-                                state_dict[flux_key_q] = q_tensor.detach().contiguous().cpu()
-                                state_dict[flux_key_r] = module.lora_A[adapter_name].detach().contiguous().cpu()
-                                state_dict[flux_key_base_r] = module.lora_base[adapter_name].detach().contiguous().cpu()
+                                    state_dict[flux_key_q] = q_tensor.detach().contiguous().cpu()
+                                    state_dict[flux_key_r] = delta_r_tensor.detach().contiguous().cpu()
+                                    state_dict[flux_key_base_r] = base_r_tensor.detach().contiguous().cpu()
+                            
+                            else:
+                                for adapter_name in module.lora_A.keys():
+                                    flux_key_q = f"{name}.lora.q.weight"
+                                    flux_key_r = f"{name}.lora.delta_r.weight"
+                                    flux_key_base_r = f"{name}.lora.base_r.weight"
+                                    
+                                    q_tensor = module.frozen_Q[adapter_name]
+                                    delta_r_tensor = module.lora_A[adapter_name]
+                                    base_r_tensor = module.lora_base[adapter_name]
+
+                                    state_dict[flux_key_q] = q_tensor.detach().contiguous().cpu()
+                                    state_dict[flux_key_r] = delta_r_tensor.detach().contiguous().cpu()
+                                    state_dict[flux_key_base_r] = base_r_tensor.detach().contiguous().cpu()
+
                     transformer_lora_layers_to_save = state_dict
                 elif isinstance(model, type(unwrap_model(text_encoder_one))):
                     text_encoder_one_lora_layers_to_save = get_peft_model_state_dict(model)
@@ -1887,19 +1900,38 @@ def main(args):
         for name, module in transformer.named_modules():
             # [修改] 增加 ICALoraLayer 类型检查
             if isinstance(module, (DeltaRLoraLayer, DeltaRTriuLoraLayer, ICALoraLayer)):
-                for adapter_name in module.lora_A.keys():
-                    flux_key_q = f"{name}.lora.q.weight"
-                    flux_key_r = f"{name}.lora.delta_r.weight" 
-                    flux_key_base_r = f"{name}.lora.base_r.weight"
-                    
-                    if isinstance(module, ICALoraLayer):
-                        q_tensor = module.frozen_S[adapter_name]
-                    else:
+                
+                if isinstance(module, ICALoraLayer):
+                    # 遍历主要的 adapter key (即 lora_S_delta)
+                    for adapter_name in module.lora_S_delta.keys():
+                        flux_key_q = f"{name}.lora.q.weight"       # 对应 Fixed Mixing (A)
+                        flux_key_r = f"{name}.lora.delta_r.weight" # 对应 Trainable Source (Delta S)
+                        flux_key_base_r = f"{name}.lora.base_r.weight" # 对应 Fixed Source Base (Base S)
+                        
+                        # 获取新架构的参数
+                        q_tensor = module.frozen_A[adapter_name]
+                        delta_r_tensor = module.lora_S_delta[adapter_name]
+                        base_r_tensor = module.lora_S_base[adapter_name]
+                        
+                        state_dict[flux_key_q] = q_tensor.detach().contiguous().cpu()
+                        state_dict[flux_key_r] = delta_r_tensor.detach().contiguous().cpu()
+                        state_dict[flux_key_base_r] = base_r_tensor.detach().contiguous().cpu()
+                
+                # --- [分支 2] 处理原版 QR-LoRA / Triu-LoRA ---
+                else:
+                    for adapter_name in module.lora_A.keys():
+                        flux_key_q = f"{name}.lora.q.weight"
+                        flux_key_r = f"{name}.lora.delta_r.weight" 
+                        flux_key_base_r = f"{name}.lora.base_r.weight"
+                        
+                        # 获取旧架构的参数
                         q_tensor = module.frozen_Q[adapter_name]
-                    
-                    state_dict[flux_key_q] = q_tensor.detach().contiguous().cpu()
-                    state_dict[flux_key_r] = module.lora_A[adapter_name].detach().contiguous().cpu()
-                    state_dict[flux_key_base_r] = module.lora_base[adapter_name].detach().contiguous().cpu()
+                        delta_r_tensor = module.lora_A[adapter_name]
+                        base_r_tensor = module.lora_base[adapter_name]
+                        
+                        state_dict[flux_key_q] = q_tensor.detach().contiguous().cpu()
+                        state_dict[flux_key_r] = delta_r_tensor.detach().contiguous().cpu()
+                        state_dict[flux_key_base_r] = base_r_tensor.detach().contiguous().cpu()
         
         transformer_lora_layers = state_dict
 
@@ -1920,7 +1952,6 @@ def main(args):
         # del pipeline
 
     accelerator.end_training()
-
 
 if __name__ == "__main__":
     args = parse_args()
