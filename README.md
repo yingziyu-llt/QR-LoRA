@@ -97,3 +97,22 @@ We also gratefully acknowledge the open-source libraries like [diffusers](https:
   year={2025}
 }
 ```
+
+
+# 大作业修改：
+
+原作者只提供了 FLUX 的脚本，只能独占一整张 A100 才能勉强跑得起来。为了试验的便利，我们选择将代码迁移到 SD3 上。训练脚本使用方法与原始论文一致。其中， `*_ica_*` 是 ICA-LoRA 相关脚本，  `*_moe_*` 是 Freq_MoE 相关脚本。
+
+推理过程中，由于 ICA 每次解出的结果具有随机性，故需要用 `SD3_dir/extract_residual_from_checkpoint.py` 以提取余项。使用方法：
+
+```bash
+python SD3_dir/extract_residual_from_checkpoint.py --model_path ./SD3 \
+       --lora_path ./exps_SD3/your_lora/pytorch_lora_weights.safetensors \
+       --output_dir sd3_residuals_exact \
+       --device cuda:0 \
+```
+
+推理：
+```bash
+bash  SD3_dir/inference_ica.sh
+```
