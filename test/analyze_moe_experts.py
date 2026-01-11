@@ -127,28 +127,47 @@ def main():
     for h in handles:
         h.remove()
         
+# ... (前面的代码保持不变) ...
+
     # 7. 可视化
     print("Generating visualization...")
     layer_names = list(expert_activations.keys())
-    # 简化层名称，只保留索引和类型，例如 'blocks.12.attn.to_q'
-    short_names = [n.replace("transformer_blocks", "blk").replace("single_transformer_blocks", "s_blk") for n in layer_names]
+    
+    # 【修改点】：直接使用数字索引作为 Y 轴标签
+    # 生成从 0 开始的序列号列表
+    layer_indices = [str(i) for i in range(len(layer_names))]
     
     data = np.array([expert_activations[n] for n in layer_names]) # [Layers, Experts]
     
-    # 排序：按层顺序
-    # 简单的按字母序可能不对，最好按 transformer 结构序。这里假设 named_modules 返回就是有序的。
-    
     plt.figure(figsize=(10, 20))
-    sns.heatmap(data, yticklabels=short_names, xticklabels=[f"Exp {i}" for i in range(args.num_experts)], cmap="viridis", annot=False)
+    
+    # 【修改点】：yticklabels 使用 layer_indices
+    # yticklabels='auto' 也是一种选择，但显式传入 indices 可以确保看到具体编号
+    ax = sns.heatmap(
+        data, 
+        yticklabels=layer_indices, 
+        xticklabels=[f"Exp {i}" for i in range(args.num_experts)], 
+        cmap="viridis", 
+        annot=False
+    )
+    
     plt.title(f"Expert Activation Heatmap\nPrompt: {args.prompt}")
     plt.xlabel("Experts (Low Freq -> High Freq)")
-    plt.ylabel("Layers")
+    plt.ylabel("Layer Index (Sequence Order)") # 修改 Y 轴标题为 "Layer Index"
+    
+    # 【可选优化】：如果层数非常多（例如几百层），标签会挤在一起。
+    # 下面这段代码可以让 Y 轴标签每隔 5 个或 10 个显示一次（视层数而定），保持美观。
+    # 如果不需要稀疏显示，可以注释掉下面这几行。
+    if len(layer_names) > 50:
+        for ind, label in enumerate(ax.get_yticklabels()):
+            if ind % 5 != 0:  # 每隔 5 个显示一个
+                label.set_visible(False)
+    
     plt.tight_layout()
     
     save_path = os.path.join(args.output_dir, "expert_heatmap.png")
     plt.savefig(save_path)
     print(f"Saved heatmap to {save_path}")
-    
     # ================= [新增] 保存量化数据 =================
     # 保存 Usage 矩阵: [Layers, Experts]
     usage_save_path = os.path.join(args.output_dir, "expert_usage_matrix.npy")
