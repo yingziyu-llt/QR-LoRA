@@ -116,3 +116,7 @@ python SD3_dir/extract_residual_from_checkpoint.py --model_path ./SD3 \
 ```bash
 bash  SD3_dir/inference_ica.sh
 ```
+
+Freq-MoE 由于结构特殊，不需要提前提取余项。运行训练后直接运行 `SD3_dir/inference_MoE.sh` 即可。
+
+相关性分析见 `test` 文件夹下对应代码。 `visualize_qrlora_similarity.sh` 可分析本项目中非 MoE 架构任意训练对的相似性。 MoE 架构相似性分析见同文件夹下 `visualize_moe_similarity.py`，有关 MoE 头使用见文件夹下 `analyze_moe_experts.sh`。
