@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # model path
-MODEL_PATH="/data/jxchen/llt/QR-LoRA/FLUX.1"
+MODEL_PATH="./FLUX.1"
 RANK=64
 OUTPUT_DIR="flux_dir"
 

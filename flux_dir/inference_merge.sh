@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODEL_PATH="/data/jxchen/llt/QR-LoRA/FLUX.1"
+MODEL_PATH="./FLUX.1"
 CONTENT_LORA_PATH="exps_flux/1202-103526-<c>-64/checkpoint-1000/pytorch_lora_weights.safetensors"
 STYLE_LORA_PATH="exps_flux/1202-094302-<s>-64/checkpoint-1000/pytorch_lora_weights.safetensors"
 RESIDUAL_PATH="flux_dir/flux_residual_weights.safetensors"

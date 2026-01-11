@@ -17,7 +17,7 @@ if [ ! -d "$OUTPUT_DIR" ]; then
     cp $0 $OUTPUT_DIR/train_script.sh
 fi
 
-MODEL_NAME="/data/jxchen/llt/QR-LoRA/SD3"
+MODEL_NAME="./SD3"
 
 NUM_GPUS=$(echo $CUDA_VISIBLE_DEVICES | tr ',' '\n' | wc -l)
 echo "NUM_GPUS: $NUM_GPUS"
